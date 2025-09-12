@@ -28,10 +28,14 @@ def home(request):
     )
     all_topics = Topic.objects.all()
     room_count = all_rooms.count()
+    room_messages = Message.objects.filter(
+        Q(room__topic__name__icontains=q)
+    )
     context = {
         "rooms": all_rooms,
         "topics": all_topics,
         "room_count": room_count,
+        "room_messages": room_messages
     }
     return render(request, 'base/home.html', context)
 
@@ -40,6 +44,22 @@ def rooms(request):
     all_rooms = Room.objects.all()
     context = {"rooms": all_rooms}
     return render(request, 'base/rooms.html', context)
+
+
+def userProfile(request, pk):
+    user = User.objects.get(id=pk)
+    rooms = user.room_set.all()
+    room_messages = user.message_set.all()
+    topics = Topic.objects.all()
+
+    context = {
+        "user": user,
+        "rooms": rooms,
+        "room_messages": room_messages,
+        "topics": topics
+    }
+    return render(request, 'base/profile.html', context)
+    pass
 
 
 def room(request, pk):
@@ -67,7 +87,9 @@ def room(request, pk):
 def createRoom(request):
     form = RoomForm(request.POST or None)
     if form.is_valid():
-        form.save()
+        room = form.save(commit=False)
+        room.host = request.user
+        room.save()
         return redirect('home')
     context = {"form": form}
     return render(request, 'base/room_form.html', context)
@@ -88,6 +110,7 @@ def updateRoom(request, pk):
     return render(request, 'base/room_form.html', context)
 
 
+@login_required(login_url="login")
 def deleteRoom(request, pk):
     room = Room.objects.get(id=pk)
     context = {"object": room}
@@ -144,3 +167,17 @@ def registerPage(request):
             return redirect('register')
     context = {"form": form}
     return render(request, 'base/register_login.html', context)
+
+
+@login_required(login_url="login")
+def deleteMessage(request, pk):
+    message = Message.objects.get(id=pk)
+    context = {"object": message}
+
+    if request.user != message.user:
+        return HttpResponseForbidden("You are not allowed to delete!!!")
+
+    if request.method == "POST":
+        message.delete()
+        return redirect('room', message.room.id)
+    return render(request, 'base/delete_room.html', context)

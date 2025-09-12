@@ -5,7 +5,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('base', '0004_remove_room_participants_room_host'),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),

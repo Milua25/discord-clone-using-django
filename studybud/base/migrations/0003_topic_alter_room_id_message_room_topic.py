@@ -6,7 +6,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('base', '0002_alter_room_id'),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
